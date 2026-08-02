@@ -60,7 +60,7 @@
 "ui.quick.copy_terminal" = "复制终端命令";
 "ui.quick.import_local_config" = "导入本地配置";
 "ui.quick.import_remote_config" = "导入订阅链接";
-"ui.quick.update_remote_configs" = "更新订阅链接";
+"ui.quick.update_remote_configs" = "更新全部订阅";
 "ui.quick.remote.url_label" = "订阅链接";
 "ui.quick.remote.url_placeholder" = "https://example.com/config.yaml";
 "ui.quick.remote.filename_label" = "文件名";

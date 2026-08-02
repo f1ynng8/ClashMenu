@@ -19,6 +19,16 @@ enum SceneAction: String {
     case stop
 }
 
+enum ManagedConfigSource: Equatable {
+    case local
+    case subscription
+}
+
+struct ManagedConfigFile {
+    let fileName: String
+    let source: ManagedConfigSource
+}
+
 enum StartTrigger {
     case manual
     case auto

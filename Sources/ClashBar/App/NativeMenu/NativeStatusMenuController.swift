@@ -298,18 +298,6 @@ final class NativeStatusMenuController: NSObject, NSMenuDelegate {
                 self.configMenu.addItem(item)
             }
         }
-
-        self.configMenu.addItem(.separator())
-        self.configMenu.addItem(self.makeMenuItem(self.tr("ui.quick.import_local_config"), action: #selector(self.importLocalConfig(_:)), enabled: self.appState.canAdjustCoreControlsManually))
-        self.configMenu.addItem(self.makeMenuItem(self.tr("ui.quick.import_remote_config"), action: #selector(self.importRemoteConfig(_:)), enabled: self.appState.canAdjustCoreControlsManually))
-        self.configMenu.addItem(self.makeMenuItem(self.tr("ui.quick.update_remote_configs"), action: #selector(self.updateRemoteConfigs(_:)), enabled: self.appState.canAdjustCoreControlsManually))
-    }
-
-    private func makeMenuItem(_ title: String, action: Selector, enabled: Bool = true) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
-        item.target = self
-        item.isEnabled = enabled
-        return item
     }
 
     private func runtimeIndicatorImage(color: NSColor) -> NSImage {
@@ -396,36 +384,6 @@ final class NativeStatusMenuController: NSObject, NSMenuDelegate {
         Task { @MainActor [weak self] in
             await self?.appState.selectConfigFile(named: fileName)
             self?.refreshAllUI(rebuildConfigMenu: true)
-        }
-    }
-
-    @objc
-    private func importLocalConfig(_ sender: Any?) {
-        guard self.appState.canAdjustCoreControlsManually else { return }
-        self.appState.importLocalConfigFile()
-        self.appState.reloadConfigFileList()
-        self.refreshAllUI(rebuildConfigMenu: true)
-    }
-
-    @objc
-    private func importRemoteConfig(_ sender: Any?) {
-        guard self.appState.canAdjustCoreControlsManually else { return }
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            await self.appState.importRemoteConfigFile()
-            self.appState.reloadConfigFileList()
-            self.refreshAllUI(rebuildConfigMenu: true)
-        }
-    }
-
-    @objc
-    private func updateRemoteConfigs(_ sender: Any?) {
-        guard self.appState.canAdjustCoreControlsManually else { return }
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            await self.appState.updateAllRemoteConfigFiles()
-            self.appState.reloadConfigFileList()
-            self.refreshAllUI(rebuildConfigMenu: true)
         }
     }
 

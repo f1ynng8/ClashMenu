@@ -33,6 +33,10 @@ extension AppState {
         self.pendingConfigChangeRestart = false
     }
 
+    func synchronizeConfigDirectoryMonitorSnapshot() {
+        self.configFileSignatureSnapshot = self.currentConfigFileSignatureSnapshot()
+    }
+
     private func handleConfigDirectoryChangesIfNeeded() async {
         if self.pendingConfigChangeRestart,
            self.isRuntimeRunning,

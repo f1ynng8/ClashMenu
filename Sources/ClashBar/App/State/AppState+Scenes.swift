@@ -42,6 +42,18 @@ extension AppState {
         }
     }
 
+    func managedSceneConfigFiles() -> [ManagedConfigFile] {
+        guard let configURL = self.resolvedSceneConfigurationURL() else { return [] }
+        let hasRemoteSource = self.sceneRemoteConfigURLStorage
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty == false
+        return [
+            ManagedConfigFile(
+                fileName: configURL.lastPathComponent,
+                source: hasRemoteSource ? .subscription : .local),
+        ]
+    }
+
     func importSceneConfigurationFile() {
         self.prepareModalWindowPresentation()
         let panel = NSOpenPanel()
@@ -69,6 +81,7 @@ extension AppState {
             try self.configImportService.writeConfigData(data, to: targetURL)
             self.sceneConfigPathStorage = targetURL.path
             self.sceneRemoteConfigURLStorage = ""
+            self.defaults.removeObject(forKey: self.sceneRemoteConfigURLKey)
             self.reloadSceneConfiguration()
             self.scheduleSceneEvaluationIfNeeded(force: true)
             self.appendLog(level: "info", message: self.local("已导入场景配置：\(targetURL.lastPathComponent)", "Imported scene config: \(targetURL.lastPathComponent)"))

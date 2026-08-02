@@ -128,7 +128,11 @@ extension AppState {
     }
 
     func persistRemoteConfigSources() {
-        defaults.set(remoteConfigSources, forKey: remoteConfigSourcesKey)
+        if remoteConfigSources.isEmpty {
+            defaults.removeObject(forKey: remoteConfigSourcesKey)
+        } else {
+            defaults.set(remoteConfigSources, forKey: remoteConfigSourcesKey)
+        }
     }
 
     func pruneRemoteConfigSourcesIfNeeded() {

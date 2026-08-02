@@ -9,7 +9,10 @@ extension AppState {
         let targetURL = workingDirectoryManager.configDirectoryURL
             .appendingPathComponent("ClashMenu.yaml", isDirectory: false)
 
+        guard !defaults.bool(forKey: bundledDefaultConfigSeededKey) else { return }
+
         if fileManager.fileExists(atPath: targetURL.path) {
+            defaults.set(true, forKey: bundledDefaultConfigSeededKey)
             return
         }
 
@@ -20,6 +23,7 @@ extension AppState {
         do {
             let data = try Data(contentsOf: bundledConfigURL)
             try writeConfigData(data, to: targetURL)
+            defaults.set(true, forKey: bundledDefaultConfigSeededKey)
         } catch {
             appendLog(
                 level: "error",
@@ -288,6 +292,82 @@ extension AppState {
         guard self.ensureConfigDirectoryAvailable() != nil else { return }
         self.refreshConfigStateAfterMutation()
         appendLog(level: "info", message: tr("log.config.loaded_count", configManager.availableConfigs.count))
+    }
+
+    func managedClashConfigFiles() -> [ManagedConfigFile] {
+        self.availableConfigFileNames.map { fileName in
+            ManagedConfigFile(
+                fileName: fileName,
+                source: self.remoteConfigSources[fileName] == nil ? .local : .subscription)
+        }
+    }
+
+    func deleteClashConfigFile(named fileName: String) async -> String? {
+        guard self.canAdjustCoreControlsManually else {
+            return self.local(
+                "场景切换启用时不能删除 Clash 配置文件。",
+                "Clash configurations cannot be deleted while scene switching is enabled.")
+        }
+        guard !self.isCoreActionProcessing else {
+            return self.local(
+                "核心操作进行中，请稍后再删除配置文件。",
+                "A core operation is in progress. Try deleting the configuration again later.")
+        }
+        guard let normalizedName = self.normalizedConfigFileName(fileName), normalizedName == fileName else {
+            return self.tr("log.config.import.invalid_filename", fileName)
+        }
+        guard let configDirectory = self.ensureConfigDirectoryAvailable() else {
+            return self.local("配置目录不可用。", "The configuration directory is unavailable.")
+        }
+
+        let targetURL = configDirectory.appendingPathComponent(fileName, isDirectory: false)
+        guard FileManager.default.fileExists(atPath: targetURL.path) else {
+            self.updateRemoteConfigSource(for: fileName, urlString: nil)
+            return self.tr("log.config.not_found", fileName)
+        }
+
+        let canonicalTargetPath = targetURL.standardizedFileURL.resolvingSymlinksInPath().path
+        let selectedPath = self.configManager.selectedConfig?.standardizedFileURL.resolvingSymlinksInPath().path
+        let deletingSelectedConfig = selectedPath == canonicalTargetPath
+        let wasRuntimeRunning = self.isRuntimeRunning
+
+        do {
+            try FileManager.default.removeItem(at: targetURL)
+        } catch {
+            return self.local(
+                "删除配置文件失败：\(error.localizedDescription)",
+                "Failed to delete configuration: \(error.localizedDescription)")
+        }
+
+        self.remoteConfigSources.removeValue(forKey: fileName)
+        self.persistRemoteConfigSources()
+        if fileName == "ClashMenu.yaml" {
+            self.defaults.set(true, forKey: self.bundledDefaultConfigSeededKey)
+        }
+
+        if let lastSuccessfulPath = self.defaults.string(forKey: self.lastSuccessfulConfigPathKey) {
+            let canonicalLastSuccessfulPath = URL(fileURLWithPath: lastSuccessfulPath)
+                .standardizedFileURL
+                .resolvingSymlinksInPath()
+                .path
+            if canonicalLastSuccessfulPath == canonicalTargetPath {
+                self.defaults.removeObject(forKey: self.lastSuccessfulConfigPathKey)
+            }
+        }
+
+        self.refreshConfigStateAfterMutation()
+        self.synchronizeConfigDirectoryMonitorSnapshot()
+        self.appendLog(
+            level: "info",
+            message: self.local("已删除配置文件：\(fileName)", "Deleted configuration: \(fileName)"))
+
+        guard deletingSelectedConfig, wasRuntimeRunning else { return nil }
+        if self.configManager.selectedConfig == nil {
+            await self.stopCore(trigger: .manual)
+        } else {
+            await self.restartCore(trigger: .configSwitch)
+        }
+        return nil
     }
 
     func reloadConfig() async {

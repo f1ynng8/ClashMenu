@@ -60,7 +60,7 @@
 "ui.quick.copy_terminal" = "Copy Terminal Command";
 "ui.quick.import_local_config" = "Import Local Config";
 "ui.quick.import_remote_config" = "Import Subscription Link";
-"ui.quick.update_remote_configs" = "Update Subscription Links";
+"ui.quick.update_remote_configs" = "Update All Subscriptions";
 "ui.quick.remote.url_label" = "Subscription URL";
 "ui.quick.remote.url_placeholder" = "https://example.com/config.yaml";
 "ui.quick.remote.filename_label" = "File Name";

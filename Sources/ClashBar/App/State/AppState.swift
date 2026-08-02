@@ -305,8 +305,10 @@ final class AppState: ObservableObject {
     @AppStorage("clashmenu.system_proxy.desired") var desiredSystemProxyEnabled: Bool = false
     let selectedConfigKey = "clashmenu.config.selected.filename"
     let legacySelectedConfigKey = "clashmenu.config.selected"
+    let sceneRemoteConfigURLKey = "clashmenu.scene.config.remote.url"
     let remoteConfigSourcesKey = "clashmenu.config.remote.sources.v1"
     let lastSuccessfulConfigPathKey = "clashmenu.last.success.config.path"
+    let bundledDefaultConfigSeededKey = "clashmenu.config.bundled_default.seeded.v1"
     let legacyDesiredTunEnabledKey = "clashmenu.tun.desired"
     let legacyEditableSettingsSnapshotKey = "clashmenu.settings.editable.snapshot.v1"
     let uiLanguageKey = "clashmenu.ui.language"
